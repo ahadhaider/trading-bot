@@ -34,18 +34,18 @@ jobs:
               libswscale-dev \
               libavformat-dev \
               libavcodec-dev \
-              zlib1g-dev
+              zlib1g-dev \
+              unzip
 
       - name: Install Buildozer and Cython
         run: |
           pip install --upgrade pip
           pip install cython==0.29.36 buildozer
 
-      - name: Accept Android SDK licenses and Build
+      - name: Build APK with Buildozer
+        env:
+          BUILDER_SAFETY_FACTOR: 1
         run: |
-          mkdir -p ~/.android
-          touch ~/.android/repositories.cfg
-          yes | sdkmanager --licenses || true
           buildozer -v android release
 
       - name: Upload APK Artifact
