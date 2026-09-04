@@ -43,7 +43,7 @@ jobs:
           pip install --upgrade pip
           pip install cython==0.29.36 buildozer
 
-      - name: Force SDK Tools into Buildozer Expected Path
+      - name: Force Install Build-Tools 37 and Accept Licenses
         run: |
           SDK_DIR="$HOME/.buildozer/android/platform/android-sdk"
           mkdir -p $SDK_DIR/tools
@@ -56,9 +56,10 @@ jobs:
           cp -r temp_tools/* tools/
           rm -rf temp_tools
           
-          mkdir -p $SDK_DIR/licenses
-          echo -e "\n8933bad161af4178b1185d1a37fbf41ea5269c55" > $SDK_DIR/licenses/android-sdk-license
-          echo -e "\n84831b9409646a918e30573bab4c9c91346d8abd" >> $SDK_DIR/licenses/android-sdk-license
+          export PATH="$SDK_DIR/tools/bin:$PATH"
+          
+          yes | sdkmanager --licenses || true
+          sdkmanager "build-tools;37.0.0" "platforms;android-31" "platform-tools"
 
       - name: Build APK with Buildozer
         env:
