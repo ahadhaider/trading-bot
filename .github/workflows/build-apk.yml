@@ -55,12 +55,10 @@ jobs:
           wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O tools.zip
           unzip -o tools.zip
           
-          # Copy to both locations so buildozer finds it no matter what it looks for
           cp -r cmdline-tools/* tools/
           cp -r cmdline-tools/* cmdline-tools/latest/
           rm tools.zip
           
-          # Accept licenses
           mkdir -p $ANDROID_HOME/licenses
           echo -e "\n8933bad161af4178b1185d1a37fbf41ea5269c55" > $ANDROID_HOME/licenses/android-sdk-license
           echo -e "\n84831b9409646a918e30573bab4c9c91346d8abd" >> $ANDROID_HOME/licenses/android-sdk-license
@@ -69,9 +67,9 @@ jobs:
           yes | sdkmanager --licenses || true
           sdkmanager "platform-tools" "platforms;android-31" "build-tools;37.0.0"
 
-      - name: Build APK with Buildozer
+      - name: Build APK with Detailed Logs
         run: |
-          buildozer -v android release
+          buildozer -v --debug android release
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
