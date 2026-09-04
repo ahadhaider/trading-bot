@@ -7,6 +7,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      ANDROID_HOME: /home/runner/.buildozer/android/platform/android-sdk
+      BUILDER_SAFETY_FACTOR: 1
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -43,35 +46,30 @@ jobs:
           pip install --upgrade pip
           pip install cython==0.29.36 buildozer
 
-      - name: Setup SDK and Dual-Path Link for Buildozer
+      - name: Setup Exact SDK Structure for Buildozer Legacy Path
         run: |
-          SDK_DIR="$HOME/.buildozer/android/platform/android-sdk"
-          mkdir -p $SDK_DIR/cmdline-tools
-          cd $SDK_DIR/cmdline-tools
+          mkdir -p $ANDROID_HOME/tools/bin
+          mkdir -p $ANDROID_HOME/cmdline-tools/latest
           
-          # Download official command line tools
+          cd $ANDROID_HOME
           wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O tools.zip
           unzip -o tools.zip
-          rm -rf latest
-          mv cmdline-tools latest
+          
+          # Copy to both locations so buildozer finds it no matter what it looks for
+          cp -r cmdline-tools/* tools/
+          cp -r cmdline-tools/* cmdline-tools/latest/
           rm tools.zip
           
-          # Satisfy both modern sdkmanager and Buildozer's legacy path check (tools/bin)
-          mkdir -p $SDK_DIR/tools
-          cp -r $SDK_DIR/cmdline-tools/latest/* $SDK_DIR/tools/
+          # Accept licenses
+          mkdir -p $ANDROID_HOME/licenses
+          echo -e "\n8933bad161af4178b1185d1a37fbf41ea5269c55" > $ANDROID_HOME/licenses/android-sdk-license
+          echo -e "\n84831b9409646a918e30573bab4c9c91346d8abd" >> $ANDROID_HOME/licenses/android-sdk-license
           
-          # Accept licenses explicitly
-          mkdir -p $SDK_DIR/licenses
-          echo -e "\n8933bad161af4178b1185d1a37fbf41ea5269c55" > $SDK_DIR/licenses/android-sdk-license
-          echo -e "\n84831b9409646a918e30573bab4c9c91346d8abd" >> $SDK_DIR/licenses/android-sdk-license
-          
-          export PATH="$SDK_DIR/tools/bin:$PATH"
-          yes | sdkmanager --sdk_root="$SDK_DIR" --licenses || true
-          sdkmanager --sdk_root="$SDK_DIR" "platform-tools" "platforms;android-31" "build-tools;37.0.0"
+          export PATH="$ANDROID_HOME/tools/bin:$PATH"
+          yes | sdkmanager --licenses || true
+          sdkmanager "platform-tools" "platforms;android-31" "build-tools;37.0.0"
 
       - name: Build APK with Buildozer
-        env:
-          BUILDER_SAFETY_FACTOR: 1
         run: |
           buildozer -v android release
 
