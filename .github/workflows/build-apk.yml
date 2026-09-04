@@ -25,7 +25,7 @@ jobs:
               git \
               python3-dev \
               ant \
-              openjdk-11-jdk \
+              openjdk-17-jdk \
               libsdl2-dev \
               libsdl2-image-dev \
               libsdl2-mixer-dev \
@@ -38,15 +38,26 @@ jobs:
               unzip \
               wget
 
-      - name: Set Java 11
-        run: |
-          sudo update-java-alternatives --set java-1.11.0-openjdk-amd64 || true
-          java -version
-
       - name: Install Buildozer and Cython
         run: |
           pip install --upgrade pip
           pip install cython==0.29.36 buildozer
+
+      - name: Preinstall SDK and Accept Licenses for Build-Tools 37
+        run: |
+          ANDROID_HOME="$HOME/.buildozer/android/platform/android-sdk"
+          mkdir -p $ANDROID_HOME/cmdline-tools
+          cd $ANDROID_HOME/cmdline-tools
+          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O tools.zip
+          unzip -o tools.zip
+          rm -rf latest
+          mv cmdline-tools latest
+          rm tools.zip
+          
+          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
+          
+          yes | sdkmanager --licenses || true
+          sdkmanager "build-tools;37.0.0" "platforms;android-31" "platform-tools"
 
       - name: Build APK with Buildozer
         env:
