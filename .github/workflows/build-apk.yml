@@ -25,7 +25,7 @@ jobs:
               git \
               python3-dev \
               ant \
-              openjdk-17-jdk \
+              openjdk-11-jdk \
               libsdl2-dev \
               libsdl2-image-dev \
               libsdl2-mixer-dev \
@@ -38,29 +38,15 @@ jobs:
               unzip \
               wget
 
+      - name: Set Java 11
+        run: |
+          sudo update-java-alternatives --set java-1.11.0-openjdk-amd64 || true
+          java -version
+
       - name: Install Buildozer and Cython
         run: |
           pip install --upgrade pip
           pip install cython==0.29.36 buildozer
-
-      - name: Setup Android SDK and Symlink Tools
-        run: |
-          SDK_DIR="$HOME/.buildozer/android/platform/android-sdk"
-          mkdir -p $SDK_DIR/cmdline-tools
-          cd $SDK_DIR/cmdline-tools
-          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O tools.zip
-          unzip -o tools.zip
-          rm -rf latest
-          mv cmdline-tools latest
-          rm tools.zip
-          
-          # Create symlink so buildozer finds sdkmanager where it expects it
-          mkdir -p $SDK_DIR/tools
-          ln -s $SDK_DIR/cmdline-tools/latest/bin $SDK_DIR/tools/bin
-          
-          mkdir -p $SDK_DIR/licenses
-          echo -e "\n8933bad161af4178b1185d1a37fbf41ea5269c55" > $SDK_DIR/licenses/android-sdk-license
-          echo -e "\n84831b9409646a918e30573bab4c9c91346d8abd" >> $SDK_DIR/licenses/android-sdk-license
 
       - name: Build APK with Buildozer
         env:
