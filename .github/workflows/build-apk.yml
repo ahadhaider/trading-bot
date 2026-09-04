@@ -43,28 +43,22 @@ jobs:
           pip install --upgrade pip
           pip install cython==0.29.36 buildozer
 
-      - name: Pre-install Android SDK, Tools, and Accept Licenses
+      - name: Correct SDK Layout and Preinstall Build-Tools 37
         run: |
           SDK_DIR="$HOME/.buildozer/android/platform/android-sdk"
-          mkdir -p $SDK_DIR/tools
-          cd $SDK_DIR
+          mkdir -p $SDK_DIR/cmdline-tools
+          cd $SDK_DIR/cmdline-tools
           
-          # Download command line tools
           wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O tools.zip
           unzip -o tools.zip
-          mkdir -p temp_tools
-          mv cmdline-tools/* temp_tools/
-          rm -rf cmdline-tools tools.zip
-          cp -r temp_tools/* tools/
-          rm -rf temp_tools
+          rm -rf latest
+          mv cmdline-tools latest
+          rm tools.zip
           
-          export PATH="$SDK_DIR/tools/bin:$PATH"
+          export PATH="$SDK_DIR/cmdline-tools/latest/bin:$PATH"
           
-          # Force accept all licenses automatically
-          yes | sdkmanager --licenses || true
-          
-          # Pre-install everything that python-for-android demands
-          sdkmanager "platform-tools" "platforms;android-31" "build-tools;37.0.0"
+          yes | sdkmanager --sdk_root="$SDK_DIR" --licenses || true
+          sdkmanager --sdk_root="$SDK_DIR" "platform-tools" "platforms;android-31" "build-tools;37.0.0"
 
       - name: Build APK with Buildozer
         env:
