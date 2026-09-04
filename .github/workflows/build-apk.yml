@@ -24,7 +24,8 @@ jobs:
               build-essential \
               git \
               python3-dev \
-              ffmpeg \
+              ant \
+              openjdk-17-jdk \
               libsdl2-dev \
               libsdl2-image-dev \
               libsdl2-mixer-dev \
@@ -40,8 +41,11 @@ jobs:
           pip install --upgrade pip
           pip install cython==0.29.36 buildozer
 
-      - name: Build APK with Buildozer
+      - name: Accept Android SDK licenses and Build
         run: |
+          mkdir -p ~/.android
+          touch ~/.android/repositories.cfg
+          yes | sdkmanager --licenses || true
           buildozer -v android release
 
       - name: Upload APK Artifact
