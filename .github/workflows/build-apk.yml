@@ -43,16 +43,24 @@ jobs:
           pip install --upgrade pip
           pip install cython==0.29.36 buildozer
 
-      - name: Preinstall Android SDK and sdkmanager
+      - name: Setup Android SDK and Symlink Tools
         run: |
-          mkdir -p $HOME/.buildozer/android/platform/android-sdk/cmdline-tools
-          cd $HOME/.buildozer/android/platform/android-sdk/cmdline-tools
-          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
-          unzip cmdline-tools.zip
+          SDK_DIR="$HOME/.buildozer/android/platform/android-sdk"
+          mkdir -p $SDK_DIR/cmdline-tools
+          cd $SDK_DIR/cmdline-tools
+          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O tools.zip
+          unzip -o tools.zip
+          rm -rf latest
           mv cmdline-tools latest
-          mkdir -p $HOME/.buildozer/android/platform/android-sdk/licenses
-          echo -e "\n8933bad161af4178b1185d1a37fbf41ea5269c55" > $HOME/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
-          echo -e "\n84831b9409646a918e30573bab4c9c91346d8abd" >> $HOME/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
+          rm tools.zip
+          
+          # Create symlink so buildozer finds sdkmanager where it expects it
+          mkdir -p $SDK_DIR/tools
+          ln -s $SDK_DIR/cmdline-tools/latest/bin $SDK_DIR/tools/bin
+          
+          mkdir -p $SDK_DIR/licenses
+          echo -e "\n8933bad161af4178b1185d1a37fbf41ea5269c55" > $SDK_DIR/licenses/android-sdk-license
+          echo -e "\n84831b9409646a918e30573bab4c9c91346d8abd" >> $SDK_DIR/licenses/android-sdk-license
 
       - name: Build APK with Buildozer
         env:
