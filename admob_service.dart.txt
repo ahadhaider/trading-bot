@@ -1,0 +1,127 @@
+// Flutter & Android AdMob Dynamic Remote Service
+// Supports: App Open, Banner, Interstitial, and Rewarded Ads (+1 Free Credit)
+
+import 'package:flutter/foundation.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+class AdMobService {
+  static final AdMobService _instance = AdMobService._internal();
+  factory AdMobService() => _instance;
+  AdMobService._internal();
+
+  // Dynamic Ad Unit IDs (loaded from backend API / Remote Config)
+  String appId = "ca-app-pub-3940256099942544~3347511713";
+  String bannerUnitId = "ca-app-pub-3940256099942544/6300978111";
+  String interstitialUnitId = "ca-app-pub-3940256099942544/1033173712";
+  String rewardedUnitId = "ca-app-pub-3940256099942544/5224354917";
+  String appOpenUnitId = "ca-app-pub-3940256099942544/3419835294";
+
+  InterstitialAd? _interstitialAd;
+  RewardedAd? _rewardedAd;
+  AppOpenAd? _appOpenAd;
+  bool isAdLoading = false;
+
+  Future<void> initialize(String backendApiUrl) async {
+    await MobileAds.instance.initialize();
+    await fetchRemoteAdConfig(backendApiUrl);
+    loadInterstitialAd();
+    loadRewardedAd();
+    loadAppOpenAd();
+  }
+
+  Future<void> fetchRemoteAdConfig(String backendUrl) async {
+    try {
+      final res = await http.get(Uri.parse('$backendUrl/api/admob/config'));
+      if (res.statusCode == 200) {
+        final data = json.decode(res.body)['config'];
+        bannerUnitId = data['adUnits']['banner'];
+        interstitialUnitId = data['adUnits']['interstitial'];
+        rewardedUnitId = data['adUnits']['rewarded'];
+        appOpenUnitId = data['adUnits']['appOpen'];
+      }
+    } catch (e) {
+      debugPrint('Using default test AdMob IDs: $e');
+    }
+  }
+
+  // 1. REWARDED AD (+1 Video Credit)
+  void loadRewardedAd() {
+    RewardedAd.load(
+      adUnitId: rewardedUnitId,
+      request: const AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (ad) {
+          _rewardedAd = ad;
+        },
+        onAdFailedToLoad: (err) {
+          _rewardedAd = null;
+          debugPrint('Rewarded ad failed: ${err.message}');
+        },
+      ),
+    );
+  }
+
+  void showRewardedAd({required Function(RewardItem reward) onUserEarnedReward}) {
+    if (_rewardedAd != null) {
+      _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+        onAdDismissedFullScreenContent: (ad) {
+          ad.dispose();
+          loadRewardedAd(); // Preload next ad
+        },
+        onAdFailedToShowFullScreenContent: (ad, err) {
+          ad.dispose();
+          loadRewardedAd();
+        },
+      );
+      _rewardedAd!.show(onUserEarnedReward: (_, reward) {
+        onUserEarnedReward(reward);
+      });
+      _rewardedAd = null;
+    } else {
+      loadRewardedAd();
+    }
+  }
+
+  // 2. INTERSTITIAL AD (Triggered after free video export)
+  void loadInterstitialAd() {
+    InterstitialAd.load(
+      adUnitId: interstitialUnitId,
+      request: const AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (ad) => _interstitialAd = ad,
+        onAdFailedToLoad: (err) => _interstitialAd = null,
+      ),
+    );
+  }
+
+  void showInterstitialIfAvailable({VoidCallback? onClosed}) {
+    if (_interstitialAd != null) {
+      _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
+        onAdDismissedFullScreenContent: (ad) {
+          ad.dispose();
+          loadInterstitialAd();
+          if (onClosed != null) onClosed();
+        },
+      );
+      _interstitialAd!.show();
+      _interstitialAd = null;
+    } else {
+      if (onClosed != null) onClosed();
+      loadInterstitialAd();
+    }
+  }
+
+  // 3. APP OPEN AD
+  void loadAppOpenAd() {
+    AppOpenAd.load(
+      adUnitId: appOpenUnitId,
+      request: const AdRequest(),
+      adLoadCallback: AppOpenAdLoadCallback(
+        onAdLoaded: (ad) => _appOpenAd = ad,
+        onAdFailedToLoad: (err) => _appOpenAd = null,
+      ),
+    );
+  }
+}

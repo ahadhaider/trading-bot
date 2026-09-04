@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Algo Trading Dashboard</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 14px; background: #0b0f19; color: #f8fafc;
+    font-family: -apple-system, Roboto, sans-serif;
+  }
+  .card { background: #131b2e; border-radius: 10px; padding: 14px; margin-bottom: 10px; border: 1px solid #1e293b; }
+  .label { font-size: 11px; color: #94a3b8; }
+  .big { font-size: 24px; font-weight: bold; margin-top: 4px; }
+  .green { color: #22c55e; }
+  .red { color: #ef4444; }
+  canvas { width: 100%; height: 140px; }
+  .trade-row {
+    display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
+    align-items: center; padding: 8px 0; border-bottom: 1px solid #1e293b;
+    font-size: 12px;
+  }
+  .symbol { font-weight: bold; }
+  .ts { font-size: 10px; color: #94a3b8; }
+  .side { font-weight: bold; text-align: center; }
+  .qty { text-align: center; color: #cbd5e1; }
+  .pnl { text-align: right; font-weight: bold; }
+  h1 { font-size: 15px; margin: 0 0 10px; font-weight: bold; }
+</style>
+</head>
+<body>
+
+  <h1>🌍 Algo Trading Dashboard</h1>
+
+  <div class="card">
+    <div class="label">Current Capital</div>
+    <div class="big">$100,000.00</div>
+    <div class="green" style="font-size:12px; margin-top:2px;">
+      +$0.00 (+0.00%)
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="label" style="margin-bottom:6px;">Capital Curve</div>
+    <canvas id="curve"></canvas>
+  </div>
+
+  <div class="card">
+    <div class="label" style="margin-bottom:4px;">Recent Trades</div>
+    
+        <div class="trade-row">
+          <div>
+            <div class="symbol">AAPL</div>
+            <div class="ts">Demo Trade</div>
+          </div>
+          <div class="side" style="color:#22c55e">BUY</div>
+          <div class="qty">10</div>
+          <div class="pnl" style="color:#22c55e">+25.00</div>
+        </div>
+  </div>
+
+<script>
+const data = [100000.0, 10025.0];
+const canvas = document.getElementById('curve');
+const ctx = canvas.getContext('2d');
+function draw() {
+  const w = canvas.clientWidth, h = 140;
+  canvas.width = w * devicePixelRatio; canvas.height = h * devicePixelRatio;
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  ctx.clearRect(0,0,w,h);
+  if (data.length < 2) return;
+  const min = Math.min(...data), max = Math.max(...data);
+  const pad = (max - min) * 0.1 || 1;
+  const lo = min - pad, hi = max + pad;
+  const up = data[data.length-1] >= data[0];
+  ctx.strokeStyle = up ? '#22c55e' : '#ef4444';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  data.forEach((v, i) => {
+    const x = (i / (data.length - 1)) * w;
+    const y = h - ((v - lo) / (hi - lo)) * h;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+}
+draw();
+window.addEventListener('resize', draw);
+</script>
+
+</body>
+</html>
