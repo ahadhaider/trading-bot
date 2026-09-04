@@ -11,3 +11,7 @@ osx.python_version = 3
 osx.kivy_version = 1.9.1
 fullscreen = 0
 android.permissions = INTERNET
+android.api = 31
+android.min_api = 21
+android.sdk = 30
+android.ndk = 25b
