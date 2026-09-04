@@ -14,4 +14,5 @@ android.permissions = INTERNET
 android.api = 31
 android.min_api = 21
 android.ndk = 25b
+android.build_tools_version = 31.0.0
 android.release_artifact = apk
